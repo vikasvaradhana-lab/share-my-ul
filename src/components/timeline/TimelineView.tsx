@@ -100,6 +100,10 @@ export default function TimelineView({ settings }: TimelineViewProps) {
   }, [settings.ticket_valid_until]);
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('code=')) {
+      window.location.href = `/auth/callback${window.location.search}&next=/admin`;
+      return;
+    }
     if (!hasFetched.current) {
       hasFetched.current = true;
       fetchBlocks();

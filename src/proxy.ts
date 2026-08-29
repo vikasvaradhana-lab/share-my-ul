@@ -3,6 +3,18 @@ import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
 export async function proxy(request: NextRequest) {
+  // If Supabase redirected an OAuth code to root or any non-callback URL, forward it to /auth/callback
+  if (request.nextUrl.searchParams.has('code') && !request.nextUrl.pathname.startsWith('/auth/callback')) {
+    const callbackUrl = new URL('/auth/callback', request.url);
+    request.nextUrl.searchParams.forEach((val, key) => {
+      callbackUrl.searchParams.set(key, val);
+    });
+    if (!callbackUrl.searchParams.has('next')) {
+      callbackUrl.searchParams.set('next', '/admin');
+    }
+    return NextResponse.redirect(callbackUrl);
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -48,5 +60,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 };
