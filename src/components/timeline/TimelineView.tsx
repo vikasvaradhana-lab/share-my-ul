@@ -107,6 +107,14 @@ export default function TimelineView({ settings }: TimelineViewProps) {
     if (!hasFetched.current) {
       hasFetched.current = true;
       fetchBlocks();
+      // Track page view
+      try {
+        fetch('/api/track', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'pageview', page: '/' }),
+        }).catch(() => {});
+      } catch {}
     }
   }, [fetchBlocks]);
 

@@ -7,8 +7,9 @@ import { stockholmMidnight, stockholmDateStr } from '@/lib/timezone';
 import AdminScheduleTab from './AdminScheduleTab';
 import AdminSettingsTab from './AdminSettingsTab';
 import AdminHistoryTab from './AdminHistoryTab';
+import AdminAnalyticsTab from './AdminAnalyticsTab';
 
-type Tab = 'schedule' | 'settings' | 'history';
+type Tab = 'schedule' | 'analytics' | 'settings' | 'history';
 
 interface AdminDashboardProps {
   user: { email: string; id: string };
@@ -57,8 +58,9 @@ export default function AdminDashboard({ user, initialSettings }: AdminDashboard
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: 'schedule', label: 'Schedule', icon: '📅' },
+    { id: 'analytics', label: 'Visits & Traffic', icon: '📊' },
     { id: 'settings', label: 'Settings', icon: '⚙️' },
-    { id: 'history', label: 'History', icon: '📊' },
+    { id: 'history', label: 'Bookings', icon: '🎟️' },
   ];
 
   return (
@@ -90,15 +92,15 @@ export default function AdminDashboard({ user, initialSettings }: AdminDashboard
 
         {/* Tab nav */}
         <div className="max-w-3xl mx-auto px-4">
-          <div className="flex gap-1">
+          <div className="flex gap-1 overflow-x-auto scrollbar-none">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 id={`tab-${tab.id}`}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === tab.id
-                    ? 'border-indigo-600 text-indigo-600'
+                    ? 'border-indigo-600 text-indigo-600 font-semibold'
                     : 'border-transparent text-neutral-500 hover:text-neutral-700'
                 }`}
               >
@@ -118,6 +120,9 @@ export default function AdminDashboard({ user, initialSettings }: AdminDashboard
             loading={loadingBlocks}
             onRefresh={fetchBlocks}
           />
+        )}
+        {activeTab === 'analytics' && (
+          <AdminAnalyticsTab />
         )}
         {activeTab === 'settings' && (
           <AdminSettingsTab

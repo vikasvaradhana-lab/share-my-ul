@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Share My UL — Architecture, Platforms & Development Reference</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    
+    @page {
+      size: A4;
+      margin: 14mm 14mm 14mm 14mm;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #1f2937;
+      background: #ffffff;
+      line-height: 1.5;
+      font-size: 12px;
+    }
+    
+    .header {
+      border-bottom: 2px solid #4f46e5;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    
+    .title-area h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #111827;
+      letter-spacing: -0.02em;
+    }
+    
+    .title-area p {
+      font-size: 12px;
+      color: #4f46e5;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    
+    .meta-badge {
+      font-size: 11px;
+      color: #6b7280;
+      text-align: right;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    .badge-pill {
+      background: #e0e7ff;
+      color: #4338ca;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 9.5px;
+      display: inline-block;
+      margin-bottom: 3px;
+    }
+    
+    h2 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #111827;
+      margin-top: 14px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 1px solid #f3f4f6;
+      padding-bottom: 3px;
+    }
+    
+    h3 {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #374151;
+      margin-top: 8px;
+      margin-bottom: 4px;
+    }
+    
+    p {
+      margin-bottom: 6px;
+      color: #374151;
+    }
+    
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    
+    .card {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 9px 11px;
+    }
+    
+    .card-title {
+      font-weight: 700;
+      color: #111827;
+      font-size: 12px;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .platform-card {
+      border-left: 3px solid #4f46e5;
+      background: #fafafa;
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+    }
+    .platform-google { border-left-color: #ea4335; }
+    .platform-supabase { border-left-color: #22c55e; }
+    .platform-github { border-left-color: #24292f; }
+    .platform-vercel { border-left-color: #000000; }
+    .platform-whatsapp { border-left-color: #25d366; }
+    
+    ul {
+      padding-left: 16px;
+      margin-bottom: 6px;
+    }
+    
+    li {
+      margin-bottom: 2px;
+      color: #374151;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0;
+      font-size: 11.5px;
+    }
+    
+    th, td {
+      border: 1px solid #e5e7eb;
+      padding: 5px 8px;
+      text-align: left;
+    }
+    
+    th {
+      background: #f3f4f6;
+      font-weight: 600;
+      color: #111827;
+    }
+    
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      background: #f3f4f6;
+      padding: 1px 3px;
+      border-radius: 3px;
+      color: #db2777;
+    }
+    
+    .status-pill {
+      display: inline-block;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .pill-green { background: #dcfce7; color: #166534; }
+    .pill-pink { background: #fce7f3; color: #9d174d; }
+    .pill-red { background: #fee2e2; color: #991b1b; }
+    .pill-grey { background: #f3f4f6; color: #6b7280; }
+    
+    .page-break {
+      page-break-before: always;
+    }
+    
+    .step-box {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 6px 9px;
+      margin-top: 4px;
+      font-size: 11px;
+    }
+    
+    .footer-note {
+      margin-top: 16px;
+      padding-top: 8px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 10px;
+      color: #9ca3af;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PAGE 1 -->
+  <div class="header">
+    <div class="title-area">
+      <div class="badge-pill">COMPREHENSIVE PROJECT & PLATFORMS GUIDE</div>
+      <h1>Share My UL — Discounted Ticket</h1>
+      <p>Architecture, Cloud Platforms & Implementation Reference</p>
+    </div>
+    <div class="meta-badge">
+      <div>Author: Vikas</div>
+      <div>Tech Stack: Next.js + Supabase + Vercel</div>
+      <div>Running Cost: $0.00 / month forever</div>
+    </div>
+  </div>
+
+  <h2>1. Executive Summary & Core Concept</h2>
+  <p>
+    <strong>Share My UL</strong> is an automated, web-based ticket sharing application designed for students in Uppsala. It allows students in a private WhatsApp group to view real-time availability of an unused UL transit season ticket, select exact 12-hour or 24-hour time slots, and submit instant booking requests over WhatsApp without needing to register user accounts.
+  </p>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">💡 Why It Was Built</div>
+      <p style="font-size: 11.5px; margin-bottom: 0;">
+        To monetize and share season ticket downtime with student friends at affordable rates (25 SEK for 12h, 30 SEK for 24h) while automating scheduling, timezone math, and awake handover constraints.
+      </p>
+    </div>
+    <div class="card">
+      <div class="card-title">🚀 100% Free Stack ($0/month)</div>
+      <p style="font-size: 11.5px; margin-bottom: 0;">
+        Leveraged permanent free tiers: Vercel Edge Serverless Hosting, Supabase Managed PostgreSQL, Google Cloud OAuth 2.0, and GitHub Cloud Repositories.
+      </p>
+    </div>
+  </div>
+
+  <h2>2. Step-by-Step Platforms Breakdown & Setup Actions</h2>
+
+  <!-- GOOGLE CLOUD -->
+  <div class="platform-card platform-google">
+    <div class="card-title">🔴 Google Cloud Console — Authentication & OAuth Setup</div>
+    <p style="margin-bottom: 4px;"><strong>Purpose</strong>: Provides secure, passwordless one-tap admin authentication for Vikas via Google Sign-In.</p>
+    <div class="step-box">
+      <strong>Actions Performed:</strong>
+      <ul>
+        <li><strong>OAuth Consent Screen</strong>: Created an External app named <em>Share My UL</em>, set support & developer email to <code>vikasvaradhana@gmail.com</code>, and published to Production mode.</li>
+        <li><strong>OAuth 2.0 Client Credentials</strong>: Created Web Application Client ID and Secret.</li>
+        <li><strong>Authorized JavaScript Origins</strong>: Added <code>http://localhost:3000</code> and <code>https://share-my-ul.vercel.app</code>.</li>
+        <li><strong>Authorized Redirect URIs</strong>: Pointed to Supabase callback: <code>https://pjdedywxobkfupuumdxf.supabase.co/auth/v1/callback</code>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SUPABASE -->
+  <div class="platform-card platform-supabase">
+    <div class="card-title">🟢 Supabase — Managed PostgreSQL & Auth Provider</div>
+    <p style="margin-bottom: 4px;"><strong>Purpose</strong>: Hosts the relational database, executes atomic schedule queries, and handles OAuth session tokens.</p>
+    <div class="step-box">
+      <strong>Actions Performed:</strong>
+      <ul>
+        <li><strong>Database Schema & Seeds</strong>: Created <code>settings</code>, <code>schedule_blocks</code>, and <code>reservations</code> tables with Row Level Security (RLS).</li>
+        <li><strong>Auth Providers</strong>: Enabled Google OAuth and supplied the Google Client ID & Client Secret.</li>
+        <li><strong>URL Configuration</strong>: Configured <strong>Site URL</strong> to <code>https://share-my-ul.vercel.app</code> and added <strong>Redirect URLs</strong> (<code>https://share-my-ul.vercel.app/**</code> and <code>http://localhost:3000/**</code>).</li>
+        <li><strong>API Security</strong>: Extracted Project URL, Public Anon Key, and Secret Service Role Key for backend administration.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- GITHUB -->
+  <div class="platform-card platform-github">
+    <div class="card-title">⚫ GitHub — Source Control & Deployment Trigger</div>
+    <p style="margin-bottom: 4px;"><strong>Purpose</strong>: Cloud repository hosting the codebase and triggering automated continuous deployment to Vercel.</p>
+    <div class="step-box">
+      <strong>Actions Performed:</strong>
+      <ul>
+        <li><strong>Git Setup & Security</strong>: Initialized git repository with strict <code>.gitignore</code> rules protecting <code>.env.local</code> secret keys.</li>
+        <li><strong>Remote Repository</strong>: Linked and pushed to <code>https://github.com/vikasvaradhana-lab/share-my-ul.git</code> on branch <code>main</code>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- PAGE 2 -->
+  <div class="page-break"></div>
+
+  <!-- VERCEL -->
+  <div class="platform-card platform-vercel">
+    <div class="card-title">▲ Vercel — Cloud Hosting & Serverless Execution</div>
+    <p style="margin-bottom: 4px;"><strong>Purpose</strong>: Builds and hosts the Next.js full-stack app, executes API route handlers, and distributes traffic over a global CDN.</p>
+    <div class="step-box">
+      <strong>Actions Performed:</strong>
+      <ul>
+        <li><strong>Project Import</strong>: Imported <code>share-my-ul</code> repository from GitHub with 1-click CI/CD integration.</li>
+        <li><strong>Environment Variables Configured</strong>: Injected 5 production environment variables (Supabase URL, Anon Key, Service Role Key, WhatsApp Number, Admin Email).</li>
+        <li><strong>Live Production Deployment</strong>: Assigned live global URL at <code>https://share-my-ul.vercel.app</code> with free automatic SSL.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- WHATSAPP -->
+  <div class="platform-card platform-whatsapp">
+    <div class="card-title">💬 WhatsApp Integration — Direct Ticket Booking Link</div>
+    <p style="margin-bottom: 4px;"><strong>Purpose</strong>: Generates frictionless deep links directly to Vikas's WhatsApp with complete booking details.</p>
+    <div class="step-box">
+      <strong>Actions Performed:</strong>
+      <ul>
+        <li><strong>Number Sanitization</strong>: Formats admin number <code>+46793366464</code> to <code>https://wa.me/46793366464</code>.</li>
+        <li><strong>Custom Message Template</strong>: Pre-fills: <em>"Hi there, I'd like to request the UL ticket. Date: [date] Time: [start] → [end] Duration: [12h/24h] Price: [SEK]"</em>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>3. Key Business Rules & Timezone Engine</h2>
+  <ul>
+    <li><strong>Three-Timezone Architecture</strong>:
+      <ul>
+        <li><em>Storage</em>: UTC ISO timestamps in database.</li>
+        <li><em>Display</em>: Stockholm local time (<code>Europe/Stockholm</code>) with automatic summer/winter daylight saving time.</li>
+        <li><em>Admin Awake Constraints</em>: Verified against Indian Standard Time (<code>Asia/Kolkata</code> 06:30–22:30 IST) for both start and end handover moments.</li>
+      </ul>
+    </li>
+    <li><strong>Interactive Slider</strong>: 30-minute increment range slider with live duration, price, and handover validation.</li>
+    <li><strong>Cross-Midnight Window</strong>: Merges contiguous available slots across consecutive green days for 24h slots.</li>
+    <li><strong>Timeline Color Rules</strong>:
+      <ul>
+        <li><span class="status-pill pill-green">🟢 Available</span>: Active bookable periods.</li>
+        <li><span class="status-pill pill-pink">🩷 Reserved for me</span>: Personal travel days/slots.</li>
+        <li><span class="status-pill pill-red">🔴 Reserved</span>: Booked student slots.</li>
+        <li><span class="status-pill pill-grey">Past / Unbookable</span>: Elapsed earlier hours of today or dates past booking cutoff.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h2>4. Admin Portal Features (`/admin`)</h2>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">📅 Month Filter & Accordion</div>
+      <p style="font-size: 11px; margin-bottom: 0;">
+        Month tabs (<code>[All Months]</code>, <code>[August · Now]</code>, <code>[September]</code>). Current day (Today) is open by default; all other days collapsed into neat 1-line summary rows.
+      </p>
+    </div>
+    <div class="card">
+      <div class="card-title">⚙️ Personal Time Management</div>
+      <p style="font-size: 11px; margin-bottom: 0;">
+        Dedicated <code>🩷 Reserve for Me</code> button. Configurable recurring Wednesday & Friday hours (e.g. 08:30–17:30 or 24h), editable directly from the schedule list.
+      </p>
+    </div>
+  </div>
+
+  <h2>5. Environment Variables & Quick Reference</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Variable Name</th>
+        <th>Value / Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><code>NEXT_PUBLIC_SUPABASE_URL</code></td><td><code>https://pjdedywxobkfupuumdxf.supabase.co</code></td></tr>
+      <tr><td><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></td><td>Public anonymous Supabase JWT key</td></tr>
+      <tr><td><code>SUPABASE_SERVICE_ROLE_KEY</code></td><td>Admin service role secret key (never exposed to client)</td></tr>
+      <tr><td><code>WHATSAPP_NUMBER</code></td><td><code>+46793366464</code></td></tr>
+      <tr><td><code>ADMIN_GOOGLE_EMAIL</code></td><td><code>vikasvaradhana@gmail.com</code></td></tr>
+    </tbody>
+  </table>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Resource</th>
+        <th>Location</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Live App</strong></td><td><a href="https://share-my-ul.vercel.app/">https://share-my-ul.vercel.app/</a></td></tr>
+      <tr><td><strong>Admin Login</strong></td><td><a href="https://share-my-ul.vercel.app/admin">https://share-my-ul.vercel.app/admin</a></td></tr>
+      <tr><td><strong>GitHub Repo</strong></td><td><a href="https://github.com/vikasvaradhana-lab/share-my-ul">https://github.com/vikasvaradhana-lab/share-my-ul</a></td></tr>
+      <tr><td><strong>Local App Copy</strong></td><td><code>E:\1. My AG Apps\share-my-ul</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="footer-note">
+    Share My UL — Complete Project & Platforms Reference Guide · Generated August 2026
+  </div>
+
+</body>
+</html>

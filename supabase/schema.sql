@@ -131,3 +131,30 @@ CREATE TRIGGER trg_schedule_blocks_updated_at
 CREATE TRIGGER trg_settings_updated_at
   BEFORE UPDATE ON public.settings
   FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+-- ─── Analytics / Visitor Tracking ────────────────────────────
+CREATE TABLE IF NOT EXISTS public.analytics_visits (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  visited_at  timestamptz NOT NULL DEFAULT now(),
+  page        text NOT NULL DEFAULT '/',
+  referrer    text,
+  event_type  text NOT NULL DEFAULT 'pageview',
+  user_agent  text
+);
+
+CREATE INDEX IF NOT EXISTS idx_analytics_visits_date ON public.analytics_visits (visited_at);
+
+ALTER TABLE public.analytics_visits ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public insert for analytics"
+  ON public.analytics_visits
+  FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (true);
+
+CREATE POLICY "Allow admin to read analytics"
+  ON public.analytics_visits
+  FOR SELECT
+  TO authenticated
+  USING (public.is_admin());
+
