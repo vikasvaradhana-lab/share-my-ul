@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+:root {
+  --color-available: #16a34a;
+  --color-available-bg: #dcfce7;
+  --color-available-border: #86efac;
+  --color-mine: #db2777;
+  --color-mine-bg: #fce7f3;
+  --color-mine-border: #f9a8d4;
+  --color-reserved: #dc2626;
+  --color-reserved-bg: #fee2e2;
+  --color-reserved-border: #fca5a5;
+  --color-past: #9ca3af;
+  --color-past-bg: #f3f4f6;
+  --color-past-border: #e5e7eb;
+  --font-inter: 'Inter', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+/* Timeline scrollbar styling */
+.timeline-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #e5e7eb transparent;
+}
+
+.timeline-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.timeline-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.timeline-scroll::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 999px;
+}
+
+/* Smooth transitions */
+.block-transition {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+/* Pulse animation for current time indicator */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.now-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Loading shimmer */
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #f3f4f6 8%, #e5e7eb 18%, #f3f4f6 33%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite;
+}
