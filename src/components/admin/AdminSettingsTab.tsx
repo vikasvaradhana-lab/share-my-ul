@@ -1,15 +1,23 @@
 'use client';
 
 import React, { useState } from 'react';
-import type { Settings } from '@/types';
+import type { Settings, ScheduleBlock } from '@/types';
 import { STOCKHOLM_TZ } from '@/lib/timezone';
+import PersonalBookingCalendar from './PersonalBookingCalendar';
 
 interface AdminSettingsTabProps {
   settings: Settings;
+  blocks?: ScheduleBlock[];
   onUpdate: (s: Settings) => void;
+  onRefreshBlocks?: () => Promise<void> | void;
 }
 
-export default function AdminSettingsTab({ settings, onUpdate }: AdminSettingsTabProps) {
+export default function AdminSettingsTab({
+  settings,
+  blocks = [],
+  onUpdate,
+  onRefreshBlocks = () => {},
+}: AdminSettingsTabProps) {
   const [form, setForm] = useState({
     ticket_valid_until: toLocalDatetime(new Date(settings.ticket_valid_until)),
     booking_cutoff: toLocalDatetime(new Date(settings.booking_cutoff)),
@@ -79,24 +87,34 @@ export default function AdminSettingsTab({ settings, onUpdate }: AdminSettingsTa
       <div className="px-5 py-4 border-b border-neutral-50">
         <h3 className="text-sm font-semibold text-neutral-900">{title}</h3>
       </div>
-      <div className="px-5 py-4 space-y-4">{children}</div>
+      <div className="p-5 space-y-4">{children}</div>
     </div>
   );
 
   const Field = ({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) => (
     <div>
-      <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1.5 block">{label}</label>
+      <label className="block text-xs font-medium text-neutral-700 mb-1.5">{label}</label>
       {children}
       {hint && <p className="text-xs text-neutral-400 mt-1">{hint}</p>}
     </div>
   );
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-base font-semibold text-neutral-900">Settings</h2>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-base font-semibold text-neutral-900">Settings & Personal Schedule</h2>
+        <p className="text-xs text-neutral-400">Configure ticket validity, prices, and personal travel blocks</p>
+      </div>
 
-      {/* Ticket */}
-      <Section title="Ticket">
+      {/* Visual Calendar for Personal Use Bookings */}
+      <PersonalBookingCalendar
+        blocks={blocks}
+        settings={settings}
+        onBlocksChange={onRefreshBlocks}
+      />
+
+      {/* Ticket Validity */}
+      <Section title="Ticket Validity & Cutoff">
         <Field label="Ticket valid until" hint="Times in Stockholm timezone">
           <input
             type="datetime-local"
@@ -116,14 +134,14 @@ export default function AdminSettingsTab({ settings, onUpdate }: AdminSettingsTa
       </Section>
 
       {/* Admin availability */}
-      <Section title="Admin availability (India time, Asia/Kolkata)">
-        <div className="flex gap-3">
+      <Section title="Admin Handover Awake Hours (India time, Asia/Kolkata)">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Awake from">
             <input
               type="time"
               value={form.awake_start}
               onChange={(e) => setForm({ ...form, awake_start: e.target.value })}
-              className="w-full border border-neutral-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-400"
+              className="w-full border border-neutral-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-400 font-mono"
             />
           </Field>
           <Field label="Awake until">
@@ -131,147 +149,18 @@ export default function AdminSettingsTab({ settings, onUpdate }: AdminSettingsTa
               type="time"
               value={form.awake_end}
               onChange={(e) => setForm({ ...form, awake_end: e.target.value })}
-              className="w-full border border-neutral-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-400"
+              className="w-full border border-neutral-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-400 font-mono"
             />
           </Field>
         </div>
         <p className="text-xs text-neutral-400">
-          Handover and return must both fall within this window for a booking to be offered.
+          Handover and return must both fall within your awake window for a student booking to be permitted. Cross-midnight hours (e.g. 06:30 to 01:30) are supported.
         </p>
       </Section>
 
-      {/* Recurring defaults */}
-      <Section title="Recurring personal use (🩷 Reserved for me)">
-        <div className="space-y-5">
-          {/* Wednesdays */}
-          <div className="border border-neutral-100 rounded-2xl p-4 bg-neutral-50/50 space-y-3">
-            <label className="flex items-center justify-between cursor-pointer">
-              <div>
-                <div className="text-sm font-medium text-neutral-800">Every Wednesday</div>
-                <div className="text-xs text-neutral-400">Default recurring personal use</div>
-              </div>
-              <div className="relative ml-4">
-                <input
-                  type="checkbox"
-                  checked={form.recurring_wed}
-                  onChange={(e) => setForm({ ...form, recurring_wed: e.target.checked })}
-                  className="sr-only peer"
-                  id="recurring-wed"
-                />
-                <label
-                  htmlFor="recurring-wed"
-                  className="block w-11 h-6 bg-neutral-200 rounded-full cursor-pointer peer-checked:bg-pink-500 transition-colors relative after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:w-5 after:h-5 after:transition-transform peer-checked:after:translate-x-5"
-                ></label>
-              </div>
-            </label>
-
-            {form.recurring_wed && (
-              <div className="pt-2 border-t border-neutral-100">
-                <div className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1.5">
-                  Reserved Time Range (Stockholm time)
-                </div>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="time"
-                    value={form.recurring_wed_start === '24:00' ? '00:00' : form.recurring_wed_start}
-                    onChange={(e) => setForm({ ...form, recurring_wed_start: e.target.value })}
-                    className="flex-1 border border-neutral-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-pink-400"
-                  />
-                  <span className="text-xs text-neutral-400">to</span>
-                  <input
-                    type="time"
-                    value={form.recurring_wed_end === '24:00' ? '23:59' : form.recurring_wed_end}
-                    onChange={(e) => setForm({ ...form, recurring_wed_end: e.target.value })}
-                    className="flex-1 border border-neutral-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-pink-400"
-                  />
-                </div>
-                <div className="flex gap-1.5 mt-2">
-                  <button
-                    type="button"
-                    onClick={() => setForm({ ...form, recurring_wed_start: '00:00', recurring_wed_end: '24:00' })}
-                    className="text-[11px] text-pink-700 bg-pink-50 hover:bg-pink-100 px-2 py-0.5 rounded-md font-medium"
-                  >
-                    All Day (24h)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setForm({ ...form, recurring_wed_start: '08:30', recurring_wed_end: '17:30' })}
-                    className="text-[11px] text-neutral-600 bg-white border border-neutral-200 hover:bg-neutral-50 px-2 py-0.5 rounded-md font-medium"
-                  >
-                    Daytime (08:30–17:30)
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Fridays */}
-          <div className="border border-neutral-100 rounded-2xl p-4 bg-neutral-50/50 space-y-3">
-            <label className="flex items-center justify-between cursor-pointer">
-              <div>
-                <div className="text-sm font-medium text-neutral-800">Every Friday</div>
-                <div className="text-xs text-neutral-400">Default recurring personal use</div>
-              </div>
-              <div className="relative ml-4">
-                <input
-                  type="checkbox"
-                  checked={form.recurring_fri}
-                  onChange={(e) => setForm({ ...form, recurring_fri: e.target.checked })}
-                  className="sr-only peer"
-                  id="recurring-fri"
-                />
-                <label
-                  htmlFor="recurring-fri"
-                  className="block w-11 h-6 bg-neutral-200 rounded-full cursor-pointer peer-checked:bg-pink-500 transition-colors relative after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:w-5 after:h-5 after:transition-transform peer-checked:after:translate-x-5"
-                ></label>
-              </div>
-            </label>
-
-            {form.recurring_fri && (
-              <div className="pt-2 border-t border-neutral-100">
-                <div className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1.5">
-                  Reserved Time Range (Stockholm time)
-                </div>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="time"
-                    value={form.recurring_fri_start === '24:00' ? '00:00' : form.recurring_fri_start}
-                    onChange={(e) => setForm({ ...form, recurring_fri_start: e.target.value })}
-                    className="flex-1 border border-neutral-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-pink-400"
-                  />
-                  <span className="text-xs text-neutral-400">to</span>
-                  <input
-                    type="time"
-                    value={form.recurring_fri_end === '24:00' ? '23:59' : form.recurring_fri_end}
-                    onChange={(e) => setForm({ ...form, recurring_fri_end: e.target.value })}
-                    className="flex-1 border border-neutral-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-pink-400"
-                  />
-                </div>
-                <div className="flex gap-1.5 mt-2">
-                  <button
-                    type="button"
-                    onClick={() => setForm({ ...form, recurring_fri_start: '00:00', recurring_fri_end: '24:00' })}
-                    className="text-[11px] text-pink-700 bg-pink-50 hover:bg-pink-100 px-2 py-0.5 rounded-md font-medium"
-                  >
-                    All Day (24h)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setForm({ ...form, recurring_fri_start: '12:00', recurring_fri_end: '22:00' })}
-                    className="text-[11px] text-neutral-600 bg-white border border-neutral-200 hover:bg-neutral-50 px-2 py-0.5 rounded-md font-medium"
-                  >
-                    Afternoon (12:00–22:00)
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </Section>
-
       {/* Pricing */}
-      <Section title="Pricing">
-        <div className="flex gap-3">
+      <Section title="Pricing Configuration">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="12-hour price (SEK)">
             <input
               type="number"
@@ -303,9 +192,9 @@ export default function AdminSettingsTab({ settings, onUpdate }: AdminSettingsTa
       <button
         onClick={handleSave}
         disabled={saving}
-        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-2xl text-sm font-semibold transition-colors disabled:opacity-50"
+        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-2xl text-sm font-semibold transition-colors disabled:opacity-50 shadow-sm"
       >
-        {saving ? 'Saving…' : 'Save Settings'}
+        {saving ? 'Saving…' : 'Save General Settings'}
       </button>
     </div>
   );

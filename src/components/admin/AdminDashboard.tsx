@@ -127,7 +127,9 @@ export default function AdminDashboard({ user, initialSettings }: AdminDashboard
         {activeTab === 'settings' && (
           <AdminSettingsTab
             settings={settings}
+            blocks={blocks}
             onUpdate={(s) => setSettings(s)}
+            onRefreshBlocks={fetchBlocks}
           />
         )}
         {activeTab === 'history' && (
