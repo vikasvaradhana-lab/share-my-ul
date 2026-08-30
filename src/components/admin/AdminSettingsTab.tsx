@@ -102,16 +102,9 @@ export default function AdminSettingsTab({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-base font-semibold text-neutral-900">Settings & Personal Schedule</h2>
-        <p className="text-xs text-neutral-400">Configure ticket validity, prices, and personal travel blocks</p>
+        <h2 className="text-base font-semibold text-neutral-900">General Settings</h2>
+        <p className="text-xs text-neutral-400">Configure ticket validity, prices, and awake handover hours</p>
       </div>
-
-      {/* Visual Calendar for Personal Use Bookings */}
-      <PersonalBookingCalendar
-        blocks={blocks}
-        settings={settings}
-        onBlocksChange={onRefreshBlocks}
-      />
 
       {/* Ticket Validity */}
       <Section title="Ticket Validity & Cutoff">
@@ -196,6 +189,15 @@ export default function AdminSettingsTab({
       >
         {saving ? 'Saving…' : 'Save General Settings'}
       </button>
+
+      {/* Visual Calendar for Personal Use Bookings (Moved to bottom) */}
+      <div className="pt-4 border-t border-neutral-200">
+        <PersonalBookingCalendar
+          blocks={blocks}
+          settings={settings}
+          onBlocksChange={onRefreshBlocks}
+        />
+      </div>
     </div>
   );
 }
