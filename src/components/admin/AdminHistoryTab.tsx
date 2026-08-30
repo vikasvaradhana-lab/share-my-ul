@@ -21,11 +21,11 @@ export default function AdminHistoryTab({ reservations, settings, onRefresh }: A
   const [error, setError] = useState<string | null>(null);
 
   const total = reservations.length;
-  const h12 = reservations.filter(r => r.duration_hours === 12).length;
-  const h24 = reservations.filter(r => r.duration_hours === 24).length;
+  const h12 = reservations.filter(r => r.duration_hours <= 12).length;
+  const h24 = reservations.filter(r => r.duration_hours > 12).length;
   const totalHours = reservations.reduce((sum, r) => sum + r.duration_hours, 0);
   const totalSek = reservations
-    .filter(r => r.status === 'COMPLETED')
+    .filter(r => r.status !== 'CANCELLED')
     .reduce((sum, r) => sum + r.price_sek, 0);
 
   const handleComplete = async (id: string) => {
@@ -50,10 +50,21 @@ export default function AdminHistoryTab({ reservations, settings, onRefresh }: A
 
   return (
     <div className="space-y-5">
-      <h2 className="text-base font-semibold text-neutral-900">Sharing History</h2>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-neutral-900">Sharing & Bookings History</h2>
+          <p className="text-xs text-neutral-400">All confirmed ticket shares with students</p>
+        </div>
+        <button
+          onClick={onRefresh}
+          className="text-xs bg-white border border-neutral-200 hover:border-neutral-300 text-neutral-600 px-3 py-1.5 rounded-xl font-medium transition-colors shadow-xs"
+        >
+          ↻ Refresh
+        </button>
+      </div>
 
       {/* Stats summary */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="bg-white rounded-2xl border border-neutral-100 shadow-sm p-4 text-center">
           <div className="text-3xl font-bold text-indigo-600">{total}</div>
           <div className="text-xs text-neutral-500 mt-1">Total shares</div>
@@ -61,11 +72,11 @@ export default function AdminHistoryTab({ reservations, settings, onRefresh }: A
         </div>
         <div className="bg-white rounded-2xl border border-neutral-100 shadow-sm p-4 text-center">
           <div className="text-3xl font-bold text-indigo-600">{totalHours}h</div>
-          <div className="text-xs text-neutral-500 mt-1">Total shared</div>
+          <div className="text-xs text-neutral-500 mt-1">Total hours shared</div>
         </div>
-        <div className="bg-white rounded-2xl border border-neutral-100 shadow-sm p-4 text-center col-span-2">
+        <div className="bg-white rounded-2xl border border-neutral-100 shadow-sm p-4 text-center">
           <div className="text-3xl font-bold text-green-600">{totalSek} SEK</div>
-          <div className="text-xs text-neutral-500 mt-1">Received (completed shares)</div>
+          <div className="text-xs text-neutral-500 mt-1">Total revenue</div>
         </div>
       </div>
 

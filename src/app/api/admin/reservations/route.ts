@@ -17,13 +17,60 @@ export async function GET(request: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const admin = createAdminSupabase();
-  const { data, error } = await admin
+  
+  // 1. Fetch explicit reservations table entries
+  const { data: resData } = await admin
     .from('reservations')
     .select('*')
     .order('created_at', { ascending: false });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ reservations: data });
+  // 2. Fetch all schedule_blocks with status = 'RESERVED'
+  const { data: blocksData } = await admin
+    .from('schedule_blocks')
+    .select('*')
+    .eq('status', 'RESERVED')
+    .order('starts_at', { ascending: false });
+
+  // 3. Fetch settings for pricing fallback
+  const { data: settingsData } = await admin
+    .from('settings')
+    .select('*')
+    .eq('id', 1)
+    .single();
+
+  const price12 = settingsData?.price_12h ?? 25;
+  const price24 = settingsData?.price_24h ?? 30;
+
+  const existingBlockIds = new Set((resData ?? []).map(r => r.block_id).filter(Boolean));
+
+  const synthesizedFromBlocks = (blocksData ?? [])
+    .filter(b => !existingBlockIds.has(b.id))
+    .map(b => {
+      const s = new Date(b.starts_at).getTime();
+      const e = new Date(b.ends_at).getTime();
+      const durationHours = Math.max(1, Math.round((e - s) / (3600 * 1000)));
+      const price = durationHours <= 12 ? price12 : price24;
+      const isPast = e <= Date.now();
+
+      return {
+        id: b.id,
+        block_id: b.id,
+        starts_at: b.starts_at,
+        ends_at: b.ends_at,
+        duration_hours: durationHours,
+        price_sek: price,
+        student_identifier: b.private_note || 'Student Share',
+        status: isPast ? 'COMPLETED' : 'ACTIVE',
+        created_at: b.created_at,
+        completed_at: isPast ? b.ends_at : null,
+      };
+    });
+
+  const combined = [...(resData ?? []), ...synthesizedFromBlocks].sort(
+    (a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime()
+  );
+
+  return NextResponse.json({ reservations: combined });
 }
 
 // POST: create reservation (mark a block as reserved with student info)
@@ -84,13 +131,51 @@ export async function PATCH(request: Request) {
   if (status === 'COMPLETED') updates.completed_at = new Date().toISOString();
   if (student_identifier !== undefined) updates.student_identifier = student_identifier;
 
-  const { data, error } = await admin
+  // 1. Try updating in reservations table
+  const { data: resData } = await admin
     .from('reservations')
     .update(updates)
     .eq('id', id)
-    .select()
+    .select();
+
+  if (resData && resData.length > 0) {
+    return NextResponse.json({ reservation: resData[0] });
+  }
+
+  // 2. If it was synthesized from schedule_blocks, insert an explicit reservation record
+  const { data: block } = await admin
+    .from('schedule_blocks')
+    .select('*')
+    .eq('id', id)
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ reservation: data });
+  if (block) {
+    const s = new Date(block.starts_at).getTime();
+    const e = new Date(block.ends_at).getTime();
+    const durationHours = Math.max(1, Math.round((e - s) / (3600 * 1000)));
+
+    const { data: settingsData } = await admin.from('settings').select('*').eq('id', 1).single();
+    const price = durationHours <= 12 ? (settingsData?.price_12h ?? 25) : (settingsData?.price_24h ?? 30);
+
+    const { data: inserted, error: insertError } = await admin
+      .from('reservations')
+      .insert({
+        block_id: block.id,
+        starts_at: block.starts_at,
+        ends_at: block.ends_at,
+        duration_hours: durationHours,
+        price_sek: price,
+        student_identifier: student_identifier ?? block.private_note,
+        status: status ?? 'COMPLETED',
+        completed_at: status === 'COMPLETED' ? new Date().toISOString() : null,
+      })
+      .select()
+      .single();
+
+    if (!insertError && inserted) {
+      return NextResponse.json({ reservation: inserted });
+    }
+  }
+
+  return NextResponse.json({ success: true });
 }
