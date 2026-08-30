@@ -168,8 +168,8 @@ export function stockholmDateStr(date: Date): string {
  */
 export function isInAwakeWindow(
   utcDate: Date,
-  awakeStart: string, // "HH:MM"
-  awakeEnd: string,   // "HH:MM"
+  awakeStart: string, // "HH:MM" or "HH:MM:SS"
+  awakeEnd: string,   // "HH:MM" or "HH:MM:SS"
   adminTz: string
 ): boolean {
   const { hours, minutes } = getLocalComponents(utcDate, adminTz);
@@ -178,6 +178,11 @@ export function isInAwakeWindow(
   const [eh, em] = awakeEnd.split(':').map(Number);
   const startMin = sh * 60 + sm;
   const endMin = eh * 60 + em;
+
+  if (endMin < startMin) {
+    // Cross-midnight window (e.g. 06:30 morning through midnight until 01:30 next morning)
+    return timeMinutes >= startMin || timeMinutes <= endMin;
+  }
   return timeMinutes >= startMin && timeMinutes <= endMin;
 }
 
