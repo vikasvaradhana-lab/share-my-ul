@@ -18,7 +18,11 @@ CREATE TABLE public.settings (
   price_12h           int         NOT NULL DEFAULT 25,
   price_24h           int         NOT NULL DEFAULT 30,
   recurring_wed       boolean     NOT NULL DEFAULT true,
+  recurring_wed_start text        DEFAULT '00:00',
+  recurring_wed_end   text        DEFAULT '24:00',
   recurring_fri       boolean     NOT NULL DEFAULT true,
+  recurring_fri_start text        DEFAULT '00:00',
+  recurring_fri_end   text        DEFAULT '24:00',
   updated_at          timestamptz NOT NULL DEFAULT now()
 );
 
