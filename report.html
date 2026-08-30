@@ -337,15 +337,30 @@
   <h2>4. Admin Portal Features (`/admin`)</h2>
   <div class="grid-2">
     <div class="card">
-      <div class="card-title">📅 Month Filter & Accordion</div>
+      <div class="card-title">📅 Month Filter & Schedule Accordion</div>
       <p style="font-size: 11px; margin-bottom: 0;">
-        Month tabs (<code>[All Months]</code>, <code>[August · Now]</code>, <code>[September]</code>). Current day (Today) is open by default; all other days collapsed into neat 1-line summary rows.
+        Month tabs (<code>[All Months]</code>, <code>[August · Now]</code>, <code>[September]</code>). Current day (Today) is open by default; other dates collapsed into neat 1-line summary rows with 2-step inline delete.
       </p>
     </div>
     <div class="card">
-      <div class="card-title">⚙️ Personal Time Management</div>
+      <div class="card-title">🩷 Personal Use Booking Calendar</div>
       <p style="font-size: 11px; margin-bottom: 0;">
-        Dedicated <code>🩷 Reserve for Me</code> button. Configurable recurring Wednesday & Friday hours (e.g. 08:30–17:30 or 24h), editable directly from the schedule list.
+        Visual monthly calendar in Settings for 1-click personal travel reservation. Supports quick presets (All Day, Work Hours 08:30–17:30, Afternoon), custom time pickers, and real-time pink badge indicators.
+      </p>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">📊 Visits & Traffic Analytics</div>
+      <p style="font-size: 11px; margin-bottom: 0;">
+        Live in-app visitor counters (Total Link Visits, Today's Visits, WhatsApp Clicks) and recent activity log stored permanently in Supabase PostgreSQL, plus Vercel Web Analytics integration.
+      </p>
+    </div>
+    <div class="card">
+      <div class="card-title">🎟️ Bookings & Sharing History</div>
+      <p style="font-size: 11px; margin-bottom: 0;">
+        Automatic tracking of all student shares with total count, total hours shared, total revenue (SEK), student identifiers, and 1-tap "Mark Completed" status updates.
       </p>
     </div>
   </div>
