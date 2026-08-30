@@ -5,7 +5,7 @@
 // ============================================================
 
 import type { PublicBlock, Settings, BookingOption } from '@/types';
-import { isInAwakeWindow, getDayOfWeek, stockholmMidnight, stockholmDateStr } from './timezone';
+import { isInAwakeWindow, getDayOfWeek, stockholmMidnight, stockholmDateStr, localToUtc, STOCKHOLM_TZ } from './timezone';
 
 const DURATIONS: Array<12 | 24> = [12, 24];
 
@@ -74,10 +74,24 @@ function isRangeFree(
     });
 
     if (!hasDbBlockForDay) {
-      // No DB block → apply recurring default
-      if (getDefaultStatus(dayStr, settings) === 'RESERVED_FOR_ME') {
-        // The range overlaps a default-reserved day with no override → conflict
-        return false;
+      // No DB block → apply recurring default with custom start/end hours
+      const dow = getDayOfWeek(dayStr);
+      if (dow === 3 && settings.recurring_wed) {
+        const startStr = settings.recurring_wed_start || '00:00';
+        const endStr = settings.recurring_wed_end || '24:00';
+        const recStart = localToUtc(dayStr, startStr, STOCKHOLM_TZ);
+        const recEnd = localToUtc(dayStr, endStr, STOCKHOLM_TZ);
+        if (rangeStart < recEnd && rangeEnd > recStart) {
+          return false;
+        }
+      } else if (dow === 5 && settings.recurring_fri) {
+        const startStr = settings.recurring_fri_start || '00:00';
+        const endStr = settings.recurring_fri_end || '24:00';
+        const recStart = localToUtc(dayStr, startStr, STOCKHOLM_TZ);
+        const recEnd = localToUtc(dayStr, endStr, STOCKHOLM_TZ);
+        if (rangeStart < recEnd && rangeEnd > recStart) {
+          return false;
+        }
       }
     }
 

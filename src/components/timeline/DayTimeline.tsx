@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import type { PublicBlock, ScheduleBlock, Settings } from '@/types';
-import { STOCKHOLM_TZ, stockholmMidnight, toStockholmTime } from '@/lib/timezone';
+import { STOCKHOLM_TZ, stockholmMidnight, toStockholmTime, localToUtc, getDayOfWeek } from '@/lib/timezone';
 
 interface DayTimelineProps {
   dateStr: string;           // YYYY-MM-DD
@@ -143,15 +143,39 @@ export default function DayTimeline({
         pushAvailableSpan(dayMidnightUtc, dayEndUtc);
       } else {
         // Recurring personal use (RESERVED_FOR_ME)
-        segs.push({
-          startFrac: 0,
-          endFrac: 1,
-          status: 'RESERVED_FOR_ME',
-          label: 'Reserved for me',
-          startsAt: dayMidnightUtc,
-          endsAt: dayEndUtc,
-          clickable: false,
-        });
+        const dow = getDayOfWeek(dateStr);
+        const startStr = dow === 3
+          ? (settings.recurring_wed_start || '00:00')
+          : (settings.recurring_fri_start || '00:00');
+        const endStr = dow === 3
+          ? (settings.recurring_wed_end || '24:00')
+          : (settings.recurring_fri_end || '24:00');
+
+        const recStart = localToUtc(dateStr, startStr, STOCKHOLM_TZ);
+        const recEnd = localToUtc(dateStr, endStr, STOCKHOLM_TZ);
+
+        // Gap before recurring start (Available)
+        if (recStart > dayMidnightUtc) {
+          pushAvailableSpan(dayMidnightUtc, recStart);
+        }
+
+        // Recurring personal block (Reserved for me)
+        if (recEnd > recStart) {
+          segs.push({
+            startFrac: toFrac(recStart),
+            endFrac: toFrac(recEnd),
+            status: 'RESERVED_FOR_ME',
+            label: 'Reserved for me',
+            startsAt: recStart,
+            endsAt: recEnd,
+            clickable: false,
+          });
+        }
+
+        // Gap after recurring end (Available)
+        if (recEnd < dayEndUtc) {
+          pushAvailableSpan(recEnd, dayEndUtc);
+        }
       }
       return segs.filter((s) => s.endFrac > s.startFrac);
     }
@@ -169,21 +193,9 @@ export default function DayTimeline({
       const segStart = bs < dayMidnightUtc ? dayMidnightUtc : bs;
       const segEnd = be > dayEndUtc ? dayEndUtc : be;
 
-      // Gap before this block
+      // Gap before this block -> ALWAYS Available (explicit blocks override the whole day's schedule)
       if (cursor < segStart) {
-        if (defaultStatus === 'AVAILABLE') {
-          pushAvailableSpan(cursor, segStart);
-        } else {
-          segs.push({
-            startFrac: toFrac(cursor),
-            endFrac: toFrac(segStart),
-            status: 'RESERVED_FOR_ME',
-            label: 'Reserved for me',
-            startsAt: cursor,
-            endsAt: segStart,
-            clickable: false,
-          });
-        }
+        pushAvailableSpan(cursor, segStart);
       }
 
       // The block itself
@@ -215,25 +227,13 @@ export default function DayTimeline({
       cursor = segEnd > cursor ? segEnd : cursor;
     }
 
-    // Trailing gap
+    // Trailing gap -> ALWAYS Available
     if (cursor < dayEndUtc) {
-      if (defaultStatus === 'AVAILABLE') {
-        pushAvailableSpan(cursor, dayEndUtc);
-      } else {
-        segs.push({
-          startFrac: toFrac(cursor),
-          endFrac: 1,
-          status: 'RESERVED_FOR_ME',
-          label: 'Reserved for me',
-          startsAt: cursor,
-          endsAt: dayEndUtc,
-          clickable: false,
-        });
-      }
+      pushAvailableSpan(cursor, dayEndUtc);
     }
 
     return segs.filter((s) => s.endFrac > s.startFrac);
-  }, [blocks, dayMidnightUtc, dayEndUtc, isPast, defaultStatus, afterCutoff, now]);
+  }, [blocks, dayMidnightUtc, dayEndUtc, isPast, defaultStatus, afterCutoff, now, dateStr, settings]);
 
   // Current time indicator (only shown for today)
   const nowFrac = isToday
