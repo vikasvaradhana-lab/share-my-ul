@@ -54,7 +54,7 @@ export async function GET(request: Request) {
     .eq('status', 'RESERVED')
     .order('starts_at', { ascending: false });
 
-  // 3. Fetch settings for pricing
+  // 3. Fetch settings for pricing fallback
   const { data: settingsData } = await admin
     .from('settings')
     .select('*')
@@ -68,7 +68,14 @@ export async function GET(request: Request) {
   const resByBlockId = new Map<string, any>();
   const explicitRes = (resData ?? []).map(r => {
     if (r.block_id) resByBlockId.set(r.block_id, r);
-    return r;
+    const s = new Date(r.starts_at).getTime();
+    const e = new Date(r.ends_at).getTime();
+    const exactHours = Math.max(1, Math.round((e - s) / (3600 * 1000)));
+    return {
+      ...r,
+      duration_hours: exactHours,
+      price_sek: Number(r.price_sek),
+    };
   });
 
   const synthesizedFromBlocks = (blocksData ?? [])
@@ -129,7 +136,7 @@ export async function POST(request: Request) {
       block_id,
       starts_at,
       ends_at,
-      duration_hours,
+      duration_hours: duration_hours <= 12 ? 12 : 24,
       price_sek: Number(price_sek),
       student_identifier,
       status: 'ACTIVE',
@@ -216,7 +223,7 @@ export async function PATCH(request: Request) {
         block_id: block.id,
         starts_at: block.starts_at,
         ends_at: block.ends_at,
-        duration_hours: durationHours,
+        duration_hours: durationHours <= 12 ? 12 : 24, // DB constraint safe
         price_sek: finalPrice,
         student_identifier: student_identifier ?? block.private_note ?? 'Student Share',
         status: status ?? (e <= Date.now() ? 'COMPLETED' : 'ACTIVE'),
