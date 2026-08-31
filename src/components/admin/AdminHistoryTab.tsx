@@ -95,6 +95,17 @@ export default function AdminHistoryTab({ reservations, settings, onRefresh }: A
     }
   };
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefreshClick = async () => {
+    setRefreshing(true);
+    try {
+      await onRefresh();
+    } finally {
+      setTimeout(() => setRefreshing(false), 500);
+    }
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
@@ -103,10 +114,13 @@ export default function AdminHistoryTab({ reservations, settings, onRefresh }: A
           <p className="text-xs text-neutral-400">Manage confirmed shares and custom received amounts</p>
         </div>
         <button
-          onClick={onRefresh}
-          className="text-xs bg-white border border-neutral-200 hover:border-neutral-300 text-neutral-600 px-3 py-1.5 rounded-xl font-medium transition-colors shadow-xs"
+          type="button"
+          onClick={handleRefreshClick}
+          disabled={refreshing}
+          className="text-xs bg-white border border-neutral-200 hover:border-neutral-300 text-neutral-600 px-3 py-1.5 rounded-xl font-medium transition-all shadow-xs flex items-center gap-1.5 disabled:opacity-60"
         >
-          ↻ Refresh
+          <span className={`inline-block text-sm ${refreshing ? 'animate-spin' : ''}`}>↻</span>
+          {refreshing ? 'Refreshing…' : 'Refresh'}
         </button>
       </div>
 

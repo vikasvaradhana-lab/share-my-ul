@@ -38,10 +38,16 @@ export default function AdminDashboard({ user, initialSettings }: AdminDashboard
   }, []);
 
   const fetchReservations = useCallback(async () => {
-    const res = await fetch('/api/admin/reservations');
-    if (res.ok) {
-      const json = await res.json();
-      setReservations(json.reservations ?? []);
+    try {
+      const res = await fetch(`/api/admin/reservations?t=${Date.now()}`, {
+        cache: 'no-store',
+      });
+      if (res.ok) {
+        const json = await res.json();
+        setReservations(json.reservations ?? []);
+      }
+    } catch (e) {
+      console.error('Failed to fetch reservations:', e);
     }
   }, []);
 
