@@ -63,10 +63,12 @@ export default function BlockEditorModal({
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasConflict, setHasConflict] = useState(false);
 
-  const handleSave = async () => {
+  const handleSave = async (overwrite = false) => {
     setSaving(true);
     setError(null);
+    setHasConflict(false);
     try {
       const startsAtUtc = localToUtc(date, startTime === '24:00' ? '00:00' : startTime, STOCKHOLM_TZ);
       let endsAtUtc = localToUtc(endDate, endTime === '24:00' ? '00:00' : endTime, STOCKHOLM_TZ);
@@ -89,6 +91,7 @@ export default function BlockEditorModal({
         ends_at: endsAtUtc.toISOString(),
         status,
         private_note: note || null,
+        overwrite,
       };
 
       const res = await fetch('/api/admin/blocks', {
@@ -100,6 +103,9 @@ export default function BlockEditorModal({
       const json = await res.json();
       if (!res.ok) {
         setError(json.error ?? 'Save failed');
+        if (json.hasConflict || res.status === 409) {
+          setHasConflict(true);
+        }
       } else {
         onSaved();
       }
@@ -241,8 +247,27 @@ export default function BlockEditorModal({
 
           {/* Conflict/error warning */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
-              ⚠️ {error}
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-900 space-y-2">
+              <div className="font-semibold flex items-center gap-1.5">
+                <span>⚠️</span>
+                <span>{error}</span>
+              </div>
+              {hasConflict && (
+                <div className="pt-1">
+                  <p className="text-xs text-amber-700 mb-2">
+                    Earlier blocks exist inside this date span. Would you like to replace them with this new block?
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleSave(true)}
+                    disabled={saving}
+                    className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors shadow-xs flex items-center justify-center gap-1.5"
+                  >
+                    <span>🔄</span>
+                    <span>{saving ? 'Replacing…' : 'Replace Overlapping Blocks & Save'}</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -258,7 +283,7 @@ export default function BlockEditorModal({
               </button>
               <button
                 type="button"
-                onClick={handleSave}
+                onClick={() => handleSave(false)}
                 disabled={saving}
                 className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-2xl text-sm font-semibold transition-colors disabled:opacity-50"
               >
