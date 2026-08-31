@@ -122,7 +122,7 @@ export async function PATCH(request: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await request.json();
-  const { id, status, student_identifier } = body;
+  const { id, status, student_identifier, price_sek } = body;
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
   const admin = createAdminSupabase();
@@ -130,6 +130,7 @@ export async function PATCH(request: Request) {
   if (status) updates.status = status;
   if (status === 'COMPLETED') updates.completed_at = new Date().toISOString();
   if (student_identifier !== undefined) updates.student_identifier = student_identifier;
+  if (price_sek !== undefined) updates.price_sek = Number(price_sek);
 
   // 1. Try updating in reservations table
   const { data: resData } = await admin
@@ -155,7 +156,8 @@ export async function PATCH(request: Request) {
     const durationHours = Math.max(1, Math.round((e - s) / (3600 * 1000)));
 
     const { data: settingsData } = await admin.from('settings').select('*').eq('id', 1).single();
-    const price = durationHours <= 12 ? (settingsData?.price_12h ?? 25) : (settingsData?.price_24h ?? 30);
+    const defaultPrice = durationHours <= 12 ? (settingsData?.price_12h ?? 25) : (settingsData?.price_24h ?? 30);
+    const finalPrice = price_sek !== undefined ? Number(price_sek) : defaultPrice;
 
     const { data: inserted, error: insertError } = await admin
       .from('reservations')
@@ -164,10 +166,10 @@ export async function PATCH(request: Request) {
         starts_at: block.starts_at,
         ends_at: block.ends_at,
         duration_hours: durationHours,
-        price_sek: price,
+        price_sek: finalPrice,
         student_identifier: student_identifier ?? block.private_note,
-        status: status ?? 'COMPLETED',
-        completed_at: status === 'COMPLETED' ? new Date().toISOString() : null,
+        status: status ?? (e <= Date.now() ? 'COMPLETED' : 'ACTIVE'),
+        completed_at: status === 'COMPLETED' || e <= Date.now() ? new Date().toISOString() : null,
       })
       .select()
       .single();
