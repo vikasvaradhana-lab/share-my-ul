@@ -11,7 +11,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
     }
 
-    if (duration !== 12 && duration !== 24) {
+    if (duration <= 0) {
       return NextResponse.json({ error: 'Invalid duration' }, { status: 400 });
     }
 
