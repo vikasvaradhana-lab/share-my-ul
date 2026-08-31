@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await request.json();
-  const { starts_at, ends_at, status, private_note, overwrite } = body;
+  const { starts_at, ends_at, status, private_note, overwrite, price_sek } = body;
 
   if (!starts_at || !ends_at || !status) {
     return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
@@ -82,6 +82,25 @@ export async function POST(request: Request) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // If status is RESERVED, sync to reservations table
+  if (status === 'RESERVED' && data) {
+    const s = new Date(starts_at).getTime();
+    const e = new Date(ends_at).getTime();
+    const durationHours = Math.max(1, Math.round((e - s) / (3600 * 1000)));
+
+    await admin.from('reservations').insert({
+      block_id: data.id,
+      starts_at: data.starts_at,
+      ends_at: data.ends_at,
+      duration_hours: durationHours <= 12 ? 12 : 24,
+      price_sek: price_sek !== undefined ? Number(price_sek) : (durationHours <= 12 ? 25 : 30),
+      student_identifier: private_note || 'Student Share',
+      status: e <= Date.now() ? 'COMPLETED' : 'ACTIVE',
+      completed_at: e <= Date.now() ? new Date().toISOString() : null,
+    });
+  }
+
   return NextResponse.json({ block: data }, { status: 201 });
 }
 
@@ -91,7 +110,7 @@ export async function PATCH(request: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await request.json();
-  const { id, starts_at, ends_at, status, private_note, overwrite } = body;
+  const { id, starts_at, ends_at, status, private_note, overwrite, price_sek } = body;
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
   const admin = createAdminSupabase();
@@ -135,6 +154,41 @@ export async function PATCH(request: Request) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // If status is RESERVED, update or create reservation
+  if (status === 'RESERVED' && data) {
+    const s = new Date(data.starts_at).getTime();
+    const e = new Date(data.ends_at).getTime();
+    const durationHours = Math.max(1, Math.round((e - s) / (3600 * 1000)));
+
+    const { data: existingRes } = await admin
+      .from('reservations')
+      .select('id')
+      .eq('block_id', data.id);
+
+    if (existingRes && existingRes.length > 0) {
+      const updatePayload: Record<string, unknown> = {
+        starts_at: data.starts_at,
+        ends_at: data.ends_at,
+        duration_hours: durationHours <= 12 ? 12 : 24,
+        student_identifier: private_note || 'Student Share',
+      };
+      if (price_sek !== undefined) updatePayload.price_sek = Number(price_sek);
+      await admin.from('reservations').update(updatePayload).eq('id', existingRes[0].id);
+    } else if (price_sek !== undefined) {
+      await admin.from('reservations').insert({
+        block_id: data.id,
+        starts_at: data.starts_at,
+        ends_at: data.ends_at,
+        duration_hours: durationHours <= 12 ? 12 : 24,
+        price_sek: Number(price_sek),
+        student_identifier: private_note || 'Student Share',
+        status: e <= Date.now() ? 'COMPLETED' : 'ACTIVE',
+        completed_at: e <= Date.now() ? new Date().toISOString() : null,
+      });
+    }
+  }
+
   return NextResponse.json({ block: data });
 }
 

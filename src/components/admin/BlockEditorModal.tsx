@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { ScheduleBlock, Settings, BlockStatus } from '@/types';
 import { stockholmDateStr, toStockholmTime, localToUtc, STOCKHOLM_TZ } from '@/lib/timezone';
 
@@ -34,6 +34,25 @@ const STATUS_OPTIONS: { value: BlockStatus; label: string }[] = [
   { value: 'RESERVED', label: '🔴 Reserved' },
 ];
 
+function calculateSlotPrice(durationHours: number, price12h: number, price24h: number): number {
+  if (durationHours <= 0) return 0;
+  if (durationHours <= 12) return price12h;
+  if (durationHours <= 24) return price24h;
+
+  const fullDays = Math.floor(durationHours / 24);
+  const remHours = durationHours % 24;
+
+  let remainderPrice = 0;
+  if (remHours > 0) {
+    if (remHours <= 12) {
+      remainderPrice = price12h;
+    } else {
+      remainderPrice = price24h;
+    }
+  }
+  return (fullDays * price24h) + remainderPrice;
+}
+
 export default function BlockEditorModal({
   block, initialStatus, initialDate, initialStartTime, initialEndTime, settings, onClose, onSaved
 }: BlockEditorModalProps) {
@@ -65,6 +84,43 @@ export default function BlockEditorModal({
   const [error, setError] = useState<string | null>(null);
   const [hasConflict, setHasConflict] = useState(false);
 
+  // Price calculation state for RESERVED shares
+  const [price, setPrice] = useState<number>(30);
+  const [isManuallyEdited, setIsManuallyEdited] = useState(false);
+
+  // Compute duration in hours
+  const { durationHours, durationDisplay, autoPrice } = useMemo(() => {
+    try {
+      const sUtc = localToUtc(date, startTime === '24:00' ? '00:00' : startTime, STOCKHOLM_TZ);
+      let eUtc = localToUtc(endDate, endTime === '24:00' ? '00:00' : endTime, STOCKHOLM_TZ);
+      if (endTime === '24:00') {
+        const nextDay = new Date(localToUtc(endDate, '00:00', STOCKHOLM_TZ));
+        nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+        eUtc = nextDay;
+      }
+      const diffMs = eUtc.getTime() - sUtc.getTime();
+      const hours = Math.max(0, Math.round(diffMs / 3600000));
+      const calcPrice = calculateSlotPrice(hours, settings.price_12h, settings.price_24h);
+
+      let display = `${hours}h`;
+      if (hours >= 24) {
+        const days = (hours / 24).toFixed(hours % 24 === 0 ? 0 : 1);
+        display = `${days} days (${hours}h)`;
+      }
+
+      return { durationHours: hours, durationDisplay: display, autoPrice: calcPrice };
+    } catch {
+      return { durationHours: 0, durationDisplay: '0h', autoPrice: 0 };
+    }
+  }, [date, endDate, startTime, endTime, settings.price_12h, settings.price_24h]);
+
+  // Keep price synchronized with auto-calculation unless admin manually edited it
+  useEffect(() => {
+    if (!isManuallyEdited) {
+      setPrice(autoPrice);
+    }
+  }, [autoPrice, isManuallyEdited]);
+
   const handleSave = async (overwrite = false) => {
     setSaving(true);
     setError(null);
@@ -92,6 +148,7 @@ export default function BlockEditorModal({
         status,
         private_note: note || null,
         overwrite,
+        price_sek: status === 'RESERVED' ? Number(price) : undefined,
       };
 
       const res = await fetch('/api/admin/blocks', {
@@ -143,7 +200,7 @@ export default function BlockEditorModal({
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
-        <div className="px-6 pt-5 pb-6 space-y-4">
+        <div className="px-6 pt-5 pb-6 space-y-4 max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-neutral-900">
               {isEdit ? 'Edit Custom Block' : 'Add Block / Override'}
@@ -230,6 +287,54 @@ export default function BlockEditorModal({
             </div>
             <p className="text-xs text-neutral-400 mt-1">Use 24:00 for full day or cross-midnight periods.</p>
           </div>
+
+          {/* Autocalculated & Editable Price for RESERVED shares */}
+          {status === 'RESERVED' && (
+            <div className="bg-neutral-50 rounded-2xl p-4 border border-neutral-200/80 space-y-2.5 animate-in fade-in duration-150">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-neutral-800">
+                  Share Amount / Revenue
+                </label>
+                <span className="text-xs font-mono font-medium text-neutral-600 bg-white px-2.5 py-0.5 rounded-md border border-neutral-200 shadow-2xs">
+                  ⏱️ {durationDisplay}
+                </span>
+              </div>
+
+              <div className="flex rounded-xl border border-neutral-200 overflow-hidden focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 bg-white">
+                <input
+                  type="number"
+                  min="0"
+                  value={price}
+                  onChange={(e) => {
+                    setPrice(Number(e.target.value));
+                    setIsManuallyEdited(true);
+                  }}
+                  className="w-full px-3.5 py-2 text-sm focus:outline-none font-bold text-green-700 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <span className="inline-flex items-center px-3.5 text-xs text-neutral-500 font-bold bg-neutral-100/80 border-l border-neutral-200 select-none">
+                  SEK
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] pt-0.5">
+                <span className="text-neutral-500">
+                  {isManuallyEdited ? '✏️ Manually customized' : '⚡ Autocalculated from duration'}
+                </span>
+                {isManuallyEdited && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPrice(autoPrice);
+                      setIsManuallyEdited(false);
+                    }}
+                    className="text-indigo-600 hover:text-indigo-700 font-medium underline"
+                  >
+                    Reset to auto ({autoPrice} SEK)
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Private note */}
           <div>
