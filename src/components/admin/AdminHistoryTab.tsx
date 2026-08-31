@@ -227,15 +227,17 @@ export default function AdminHistoryTab({ reservations, settings, onRefresh }: A
                         <label className="block text-xs font-medium text-neutral-700 mb-1">
                           Amount Received (SEK)
                         </label>
-                        <div className="relative">
+                        <div className="flex rounded-xl border border-neutral-200 overflow-hidden focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 bg-white">
                           <input
                             type="number"
                             min="0"
                             value={editPrice}
                             onChange={(e) => setEditPrice(Number(e.target.value))}
-                            className="w-full border border-neutral-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 font-semibold text-green-700"
+                            className="w-full px-3 py-2 text-sm focus:outline-none font-semibold text-green-700 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
-                          <span className="absolute right-3 top-2.5 text-xs text-neutral-400 font-medium">SEK</span>
+                          <span className="inline-flex items-center px-3 text-xs text-neutral-500 font-semibold bg-neutral-50 border-l border-neutral-200 select-none">
+                            SEK
+                          </span>
                         </div>
                         <p className="text-[10px] text-neutral-400 mt-1">Set to 0 if waived</p>
                       </div>
